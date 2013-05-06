@@ -14,3 +14,7 @@ dbUser <- ""
 
 #password database
 dbPass <- ""
+
+#number of ohloh API calls per day, set a little lower than the acutal amount
+#for example if you can make 1000 calls per day, set it to 990 
+apiCalls <- 990
