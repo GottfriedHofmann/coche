@@ -1,6 +1,6 @@
 #grabs general project information from ohloh and saves them to a postgreSQL database
-#ten sets for each request
-#saves each set as XML in ./data/xml so further info can be aquired by demand from disk
+#TODO: ten sets for each request
+#opt: saves each set as XML in ./data/xml so further info can be aquired by demand from disk
 
 require("XML")
 require("RPostgreSQL")
@@ -23,14 +23,13 @@ con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
 
 #at the moment this drops existing tables for testing purposes
 if(dbExistsTable(con, "projects")) {
-  dbRemoveTable(con, "projects")
+  dbSendQuery(con, "DROP TABLE projects CASCADE;")
   dbSendQuery(con, "CREATE TABLE projects (id integer primary key, name varchar(40), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
 } else {
   dbSendQuery(con, "CREATE TABLE projects (id integer primary key, name varchar(40), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
 }
 
 if(dbExistsTable(con, "licenses")) {
-  #dbRemoveTable(con, "licenses")
   dbSendQuery(con, "DROP TABLE licenses CASCADE;")
   dbSendQuery(con, "CREATE TABLE licenses (name varchar(40) UNIQUE, nice_name text, id serial primary key);")
 } else {
@@ -38,17 +37,11 @@ if(dbExistsTable(con, "licenses")) {
 }
 
 if(dbExistsTable(con, "project_licenses")) {
-  dbRemoveTable(con, "project_licenses")
-  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer, license_id integer references licenses (id) );")
+  dbSendQuery(con, "DROP TABLE project_licenses;")
+  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer references projects (id), license_id integer references licenses (id) );")
 } else {
-  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer, license_id integer references licenses (id) );")
+  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer references projects (id), license_id integer references licenses (id) );")
 }
-
-
-
-# licenses <- NA
-# licenses <- data.frame()
-# licenses <- dbGetQuery(con, "SELECT name, nice_name, id FROM licenses;")
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -60,8 +53,7 @@ if(storeXML == TRUE) {
 }
 
 #stores project information in the database
-#the temporary XML structure stores 10 projects each because each request returns 10 projects
-#loop runs in steps of 'numToParse' due to API key restrictions
+#loop runs in steps of 'apiCalls' due to API key restrictions
 for (i in 1:apiCalls) {
   actURL <- paste("http://www.ohloh.net/projects/",i,".xml?api_key=",apiKey, sep="")
   print(actURL)
@@ -146,6 +138,7 @@ for (i in 1:apiCalls) {
         license_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_name)[[1]]))
         license_nice_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_nice_name)[[1]]))
         
+        #naive implementation of licenses schema. TODO: Faster alternative
         if(class(license_name) != "try-error"){
           licensesQuery <- NA
           licensesQuery <- paste("INSERT INTO licenses(name, nice_name) VALUES('",license_name,"','",license_nice_name,"')", sep="")
