@@ -29,19 +29,26 @@ if(dbExistsTable(con, "projects")) {
   dbSendQuery(con, "CREATE TABLE projects (id integer primary key, name varchar(40), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
 }
 
-if(dbExistsTable(con, "project_licenses")) {
-  dbRemoveTable(con, "project_licenses")
-  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer, license_id integer);")
+if(dbExistsTable(con, "licenses")) {
+  #dbRemoveTable(con, "licenses")
+  dbSendQuery(con, "DROP TABLE licenses CASCADE;")
+  dbSendQuery(con, "CREATE TABLE licenses (name varchar(40) UNIQUE, nice_name text, id serial primary key);")
 } else {
-  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer, license_id integer);")
+  dbSendQuery(con, "CREATE TABLE licenses (name varchar(40) UNIQUE, nice_name text, id serial primary key);")
 }
 
-if(dbExistsTable(con, "licenses")) {
-  dbRemoveTable(con, "licenses")
-  dbSendQuery(con, "CREATE TABLE licenses (name varchar(40), nice_name text, id serial primary key);")
+if(dbExistsTable(con, "project_licenses")) {
+  dbRemoveTable(con, "project_licenses")
+  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer, license_id integer references licenses (id) );")
 } else {
-  dbSendQuery(con, "CREATE TABLE licenses (name varchar(40), nice_name text, id serial primary key);")
+  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer, license_id integer references licenses (id) );")
 }
+
+
+
+# licenses <- NA
+# licenses <- data.frame()
+# licenses <- dbGetQuery(con, "SELECT name, nice_name, id FROM licenses;")
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -130,24 +137,33 @@ for (i in 1:apiCalls) {
     numLicenses <- length(tmpLicenses[["result"]][["project"]][["licenses"]]["license", all=TRUE])
     if(numLicenses > 0) {
       for (k in 1:length(tmpLicenses[["result"]][["project"]][["licenses"]]["license", all=TRUE])) {
-	iterator_license_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/name", sep="")
-	iterator_license_nice_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/nice_name", sep="")
-	
-	license_name <- NA
-	license_nice_name <- NA
-	
-	license_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_name)[[1]]))
-	license_nice_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_nice_name)[[1]]))
-	
-	if(class(license_name) != "try-error"){
-	  licenseQuery <- NA
-	  licenseQuery <- paste("INSERT INTO licenses(name, nice_name) VALUES('",license_name,"','",license_nice_name,"')", sep="")
-	  dbGetQuery(con, licenseQuery)
-	}
+        iterator_license_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/name", sep="")
+        iterator_license_nice_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/nice_name", sep="")
+        
+        license_name <- NA
+        license_nice_name <- NA
+        
+        license_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_name)[[1]]))
+        license_nice_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_nice_name)[[1]]))
+        
+        if(class(license_name) != "try-error"){
+          licensesQuery <- NA
+          licensesQuery <- paste("INSERT INTO licenses(name, nice_name) VALUES('",license_name,"','",license_nice_name,"')", sep="")
+          dbGetQuery(con, licensesQuery)
+          
+          license_idQuery <- NA
+          license_id <- NA
+          license_idQuery <- paste("SELECT id FROM licenses WHERE name='",license_name,"';", sep="")
+          license_id <- dbGetQuery(con, license_idQuery)
+          
+          project_licensesQuery <- NA
+          project_licensesQuery <- paste("INSERT INTO project_licenses(project_id, license_id) VALUES(",id,", ",license_id,")", sep="")
+          dbGetQuery(con, project_licensesQuery)
+          }
+        }
       }
     }
-  } 
-}
+  }
 
 
 
