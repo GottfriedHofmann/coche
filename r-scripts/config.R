@@ -19,6 +19,9 @@ dbPass <- ""
 #for example if you can make 1000 calls per day, set it to 990 
 apiCalls <- 20
 
+#in case of a testrun, existing tables are dropped and new ones created
+testRun <- TRUE
+
 #should the script store each XML-file retrieved locally on disk?
 storeXML <- TRUE
 
