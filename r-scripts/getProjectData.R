@@ -21,26 +21,47 @@ drv <- dbDriver("PostgreSQL")
 #database information is grabbed from config.R
 con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
 
-#at the moment this drops existing tables for testing purposes
-if(dbExistsTable(con, "projects")) {
+#set up the database table structure
+#if testRun is set to TRUE, drop old tables and create new ones
+projectsCreateTableQuery <- paste("CREATE TABLE projects (id integer primary key, name varchar(40), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
+if(dbExistsTable(con, "projects") && testRun) {   
   dbSendQuery(con, "DROP TABLE projects CASCADE;")
-  dbSendQuery(con, "CREATE TABLE projects (id integer primary key, name varchar(40), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
+  dbSendQuery(con, projectsCreateTableQuery)
 } else {
-  dbSendQuery(con, "CREATE TABLE projects (id integer primary key, name varchar(40), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
+  dbSendQuery(con, projectsCreateTableQuery)
 }
 
-if(dbExistsTable(con, "licenses")) {
+#note: the idea of tags is that they repeat themselfs, maybe normalize further with tag id and tag table?
+tagsCreateTableQuery <- paste("CREATE TABLE tags (id serial primary key, project_id integer references projects (id), tag text);")
+if(dbExistsTable(con, "tags") && testRun) {
+  dbSendQuery(con, "DROP TABLE tags;")
+  dbSendQuery(con, tagsCreateTableQuery)
+} else {
+  dbSendQuery(con, tagsCreateTableQuery)
+}
+
+analysisCreateTableQuery <- paste("CREATE TABLE analysis (id integer primary key, project_id integer references projects (id), updated_at date, logged_at date, min_month date, max_month date, twelve_month_contributor_count integer, total_code_lines integer, main_language_id integer);")
+if(dbExistsTable(con, "analysis") && testRun) {
+  dbSendQuery(con, "DROP TABLE analysis CASCADE;")
+  dbSendQuery(con, analysisCreateTableQuery)
+} else {
+  dbSendQuery(con, analysisCreateTableQuery)
+}
+
+licensesCreateTableQuery <- paste("CREATE TABLE licenses (name varchar(40) UNIQUE, nice_name text, id serial primary key);")
+if(dbExistsTable(con, "licenses") && testRun) {
   dbSendQuery(con, "DROP TABLE licenses CASCADE;")
-  dbSendQuery(con, "CREATE TABLE licenses (name varchar(40) UNIQUE, nice_name text, id serial primary key);")
+  dbSendQuery(con, licensesCreateTableQuery)
 } else {
-  dbSendQuery(con, "CREATE TABLE licenses (name varchar(40) UNIQUE, nice_name text, id serial primary key);")
+  dbSendQuery(con, licensesCreateTableQuery)
 }
 
-if(dbExistsTable(con, "project_licenses")) {
+project_licensesCreateTableQuery <- paste("CREATE TABLE project_licenses (id serial primary key, project_id integer references projects (id), license_id integer references licenses (id) );")
+if(dbExistsTable(con, "project_licenses") && testRun) {
   dbSendQuery(con, "DROP TABLE project_licenses;")
-  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer references projects (id), license_id integer references licenses (id) );")
+  dbSendQuery(con, project_licensesCreateTableQuery)
 } else {
-  dbSendQuery(con, "CREATE TABLE project_licenses (id serial primary key, project_id integer references projects (id), license_id integer references licenses (id) );")
+  dbSendQuery(con, project_licensesCreateTableQuery)
 }
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
@@ -54,6 +75,7 @@ if(storeXML == TRUE) {
 
 #stores project information in the database
 #loop runs in steps of 'apiCalls' due to API key restrictions
+system.time(
 for (i in 1:apiCalls) {
   actURL <- paste("http://www.ohloh.net/projects/",i,".xml?api_key=",apiKey, sep="")
   print(actURL)
@@ -69,6 +91,7 @@ for (i in 1:apiCalls) {
       try(saveXML(tmpXML, file=wd(projectDataFileName), compression = 0, ident=TRUE))
     }
     
+    #leftover from the implementation that parsed 10 projects each (leaving analysis etc out)
     j <- 1
     
     iterator_Id <- paste("/response/result/project[",j,"]/id", sep="")
@@ -101,6 +124,8 @@ for (i in 1:apiCalls) {
     rating_count <- NA
     analysis_id <- NA
     
+    #using try around the whole statement so that the objects stay as NA if things fail
+    #this way the table cells of the database will simply be filled with nothing in that case
     try(id <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_Id)[[1]])))
     try(name <- xmlValue(getNodeSet(tmpXML, iterator_Name)[[1]]))
     try(url <- xmlValue(getNodeSet(tmpXML, iterator_Url)[[1]]))
@@ -121,14 +146,34 @@ for (i in 1:apiCalls) {
     #some entries are duplicates because Ohloh seems to add information even for older projects so the chunks change over time.
     try(dbWriteTable(con, "projects", tmpProjDf, row.names = F, append = T))
     
-    tmpLicenses <- NA
-    numLicenses <- NA
+    if (class(analysis_id) == "integer") {
+      print(paste("Analysis ",analysis_id," found", sep="")) 
+    }
+    
     #use xmlRoot to get the length of subnodes later on
-    #maybe this step can be done earlier?
-    tmpLicenses <- xmlRoot(tmpXML)
-    numLicenses <- length(tmpLicenses[["result"]][["project"]][["licenses"]]["license", all=TRUE])
+    tmpXMLRoot <- NA
+    tmpXMLRoot <- xmlRoot(tmpXML)
+    
+    tags <- NA
+    numTags <- NA
+    numTags <- length(tmpXMLRoot[["result"]][["project"]][["tags"]]["tag", all=TRUE])
+    
+    if (numTags > 0) {
+      for (k in 1:numTags) {
+        iterator_tag <- paste("/response/result/project[",j,"]/tags/tag[",k,"]", sep="")
+        tag <- NA
+        tag <- try(xmlValue(getNodeSet(tmpXML, iterator_tag)[[1]]))
+        if(class(tag) != "try-error") {
+          tagQuery <- paste("INSERT INTO tags(project_id, tag) VALUES('",id,"', '",tag,"')", sep="")
+          dbGetQuery(con, tagQuery)
+        }
+      }
+    }
+    
+    numLicenses <- NA
+    numLicenses <- length(tmpXMLRoot[["result"]][["project"]][["licenses"]]["license", all=TRUE])
     if(numLicenses > 0) {
-      for (k in 1:length(tmpLicenses[["result"]][["project"]][["licenses"]]["license", all=TRUE])) {
+      for (k in 1:length(tmpXMLRoot[["result"]][["project"]][["licenses"]]["license", all=TRUE])) {
         iterator_license_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/name", sep="")
         iterator_license_nice_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/nice_name", sep="")
         
@@ -157,9 +202,10 @@ for (i in 1:apiCalls) {
       }
     }
   }
+)
 
+#close the connection to avoid orphan connection if running the script multiple times
+dbDisconnect(con)
 
-
-
-quit(save = "no", status = 0, runLast = FALSE)
+#quit(save = "no", status = 0, runLast = FALSE)
 
