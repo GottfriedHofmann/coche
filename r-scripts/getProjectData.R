@@ -173,7 +173,7 @@ for (i in 1:apiCalls) {
     numLicenses <- NA
     numLicenses <- length(tmpXMLRoot[["result"]][["project"]][["licenses"]]["license", all=TRUE])
     if(numLicenses > 0) {
-      for (k in 1:length(tmpXMLRoot[["result"]][["project"]][["licenses"]]["license", all=TRUE])) {
+      for (k in 1:numLicenses) {
         iterator_license_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/name", sep="")
         iterator_license_nice_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/nice_name", sep="")
         
