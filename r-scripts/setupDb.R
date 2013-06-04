@@ -1,5 +1,6 @@
 #Set up tables and triggers for the database
 #should only be run when there is already a connection for the database
+#and config.R is alread loaded
 
 require("RPostgreSQL")
 
@@ -7,10 +8,6 @@ require("RPostgreSQL")
 wd <- function(Dir) {
   return(paste("~/git-repositories/coche/",Dir,sep=""))
 }
-
-#login credentials etc. are stored in config.R
-source(wd("./r-scripts/config.R"))
-
 
 #set up the database table structure
 #if testRun is set to TRUE, drop old tables and create new ones
@@ -62,6 +59,16 @@ if(dbExistsTable(con, "project_licenses") && testRun) {
   dbSendQuery(con, project_licensesCreateTableQuery)
 } else {
   dbSendQuery(con, project_licensesCreateTableQuery)
+}
+
+#only run if the parsing of language info is enabled
+#TODO: category can have only 3 values, is there s.th. like factor in R for pgSQL?
+languagesCreateTableQuery <- paste("CREATE TABLE languages (id integer primary key, name varchar(40), nice_name text, category varchar(40), code integer, comments integer, blanks integer, comment_ratio float, projects integer, contributors integer, commits integer);")
+if(dbExistsTable(con, "languages") && testRun && parseLang) {
+  dbSendQuery(con, "DROP TABLE languages;")
+  dbSendQuery(con, languagesCreateTableQuery)
+} else {
+  dbSendQuery(con, languagesCreateTableQuery)
 }
 
 #create a trigger on the DB to auto-normalize (note: this is still kind of a hack since tag_id needs to be text instead of integer)
