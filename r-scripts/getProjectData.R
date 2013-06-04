@@ -31,13 +31,22 @@ if(dbExistsTable(con, "projects") && testRun) {
   dbSendQuery(con, projectsCreateTableQuery)
 }
 
-#note: the idea of tags is that they repeat themselfs, maybe normalize further with tag id and tag table?
-tagsCreateTableQuery <- paste("CREATE TABLE tags (id serial primary key, project_id integer references projects (id), tag text);")
+tagsCreateTableQuery <- paste("CREATE TABLE tags (id serial primary key, tag text UNIQUE);")
 if(dbExistsTable(con, "tags") && testRun) {
   dbSendQuery(con, "DROP TABLE tags;")
   dbSendQuery(con, tagsCreateTableQuery)
 } else {
   dbSendQuery(con, tagsCreateTableQuery)
+}
+
+#new setup for project_tags to work with a trigger for auto-normalization
+#project_tagsCreateTableQuery <- paste("CREATE TABLE project_tags (project_id integer references projects (id), tag_id integer references tags (id), id serial primary key);")
+project_tagsCreateTableQuery <- paste("CREATE TABLE project_tags (project_id integer references projects (id), tag_id text, id serial primary key);")
+if(dbExistsTable(con, "project_tags") && testRun) {
+  dbSendQuery(con, "DROP TABLE project_tags;")
+  dbSendQuery(con, project_tagsCreateTableQuery)
+} else {
+  dbSendQuery(con, project_tagsCreateTableQuery)
 }
 
 analysisCreateTableQuery <- paste("CREATE TABLE analysis (id integer primary key, project_id integer references projects (id), updated_at date, logged_at date, min_month date, max_month date, twelve_month_contributor_count integer, total_code_lines integer, main_language_id integer);")
@@ -63,6 +72,37 @@ if(dbExistsTable(con, "project_licenses") && testRun) {
 } else {
   dbSendQuery(con, project_licensesCreateTableQuery)
 }
+
+#create a trigger on the DB to auto-normalize (note: this is still kind of a hack since tag_id needs to be text instead of integer)
+project_tagsTriggerQuery <- paste("CREATE OR REPLACE FUNCTION normalize_tags() RETURNS TRIGGER AS $$
+DECLARE
+foo int := 0;
+BEGIN
+IF (SELECT NEW.tag_id ~ '^[0-9]+$') THEN
+RETURN NEW;
+
+END IF;
+foo := (SELECT id FROM tags WHERE tag = NEW.tag_id);
+IF foo != 0 THEN
+-- IF NEW.tag_id IN (SELECT tag AS tmpTag FROM tags) THEN
+NEW.tag_id := foo;
+RETURN NEW;
+END IF;
+-- ELSE
+INSERT INTO tags (tag) VALUES (NEW.tag_id);
+NEW.tag_id := (SELECT id AS tagId FROM tags WHERE tag =  NEW.tag_id);
+RETURN NEW;
+-- END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tagsNormalizeTrg
+BEFORE INSERT OR UPDATE
+ON project_tags
+FOR EACH ROW
+EXECUTE PROCEDURE normalize_tags();
+")
+dbSendQuery(con, project_tagsTriggerQuery)
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -164,7 +204,7 @@ for (i in 1:apiCalls) {
         tag <- NA
         tag <- try(xmlValue(getNodeSet(tmpXML, iterator_tag)[[1]]))
         if(class(tag) != "try-error") {
-          tagQuery <- paste("INSERT INTO tags(project_id, tag) VALUES('",id,"', '",tag,"')", sep="")
+          tagQuery <- paste("INSERT INTO project_tags(project_id, tag_id) VALUES('",id,"', '",tag,"')", sep="")
           dbGetQuery(con, tagQuery)
         }
       }
