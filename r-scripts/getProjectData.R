@@ -24,6 +24,11 @@ con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
 #set up the tables and triggers for the db
 source(wd("./r-scripts/setupDb.R"))
 
+#this should need to be run only once
+if(parseLang) {
+  source(wd("./r-scripts/getLanguagesData.R"))
+}
+
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
 #projectsDir is set in config.R

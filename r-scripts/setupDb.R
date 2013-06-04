@@ -63,7 +63,7 @@ if(dbExistsTable(con, "project_licenses") && testRun) {
 
 #only run if the parsing of language info is enabled
 #TODO: category can have only 3 values, is there s.th. like factor in R for pgSQL?
-languagesCreateTableQuery <- paste("CREATE TABLE languages (id integer primary key, name varchar(40), nice_name text, category varchar(40), code integer, comments integer, blanks integer, comment_ratio float, projects integer, contributors integer, commits integer);")
+languagesCreateTableQuery <- paste("CREATE TABLE languages (id integer primary key, name varchar(40), nice_name text, category varchar(40), code bigint, comments bigint, blanks integer, comment_ratio float, projects integer, contributors integer, commits integer);")
 if(dbExistsTable(con, "languages") && testRun && parseLang) {
   dbSendQuery(con, "DROP TABLE languages;")
   dbSendQuery(con, languagesCreateTableQuery)
