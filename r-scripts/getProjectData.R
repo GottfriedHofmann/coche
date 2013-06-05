@@ -38,10 +38,16 @@ if(storeXML == TRUE) {
   }
 }
 
+currentMaxId <- NA
+currentMaxId <- dbGetQuery(con, "SELECT max(id) from projects;")
+if (is.na(currentMaxId)) {
+  currentMaxId <- 0
+}
+
 #stores project information in the database and locally on disk (optional)
 #loop runs in steps of 'apiCalls' due to API key restrictions
 system.time(
-for (i in 1:apiCalls) {
+for (i in currentMaxId+1:apiCalls) {
   actURL <- paste("http://www.ohloh.net/projects/",i,".xml?api_key=",apiKey, sep="")
   print(actURL)
   
