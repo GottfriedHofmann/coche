@@ -120,6 +120,8 @@ if(class(tmpLangXML)[1] != "try-error"){
         }      
       }
     }
+    #since some API calls have been used we need to remove the from the global variable that defines how many are left
+    apiCalls <- apiCalls - langLoops - 1
   }
 }
   

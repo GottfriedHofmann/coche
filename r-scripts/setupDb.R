@@ -19,6 +19,16 @@ if(dbExistsTable(con, "projects") && testRun) {
   dbSendQuery(con, projectsCreateTableQuery)
 }
 
+#only run if the parsing of language info is enabled
+#TODO: category can have only 3 values, is there s.th. like factor in R for pgSQL?
+languagesCreateTableQuery <- paste("CREATE TABLE languages (id integer primary key, name varchar(40), nice_name text, category varchar(40), code bigint, comments bigint, blanks integer, comment_ratio float, projects integer, contributors integer, commits integer);")
+if(dbExistsTable(con, "languages") && testRun && parseLang) {
+  dbSendQuery(con, "DROP TABLE languages;")
+  dbSendQuery(con, languagesCreateTableQuery)
+} else if (parseLang){
+  dbSendQuery(con, languagesCreateTableQuery)
+}
+
 tagsCreateTableQuery <- paste("CREATE TABLE tags (id serial primary key, tag text UNIQUE);")
 if(dbExistsTable(con, "tags") && testRun) {
   dbSendQuery(con, "DROP TABLE tags;")
@@ -37,7 +47,8 @@ if(dbExistsTable(con, "project_tags") && testRun) {
   dbSendQuery(con, project_tagsCreateTableQuery)
 }
 
-analysisCreateTableQuery <- paste("CREATE TABLE analysis (id integer primary key, project_id integer references projects (id), updated_at date, logged_at date, min_month date, max_month date, twelve_month_contributor_count integer, total_code_lines integer, main_language_id integer);")
+#when ohloh updates projects, new analysis are created. In order to allow to store multiple analysis for one project, the project id is used as foreign key
+analysisCreateTableQuery <- paste("CREATE TABLE analysis (id integer primary key, url text, project_id integer references projects (id), updated_at date, logged_at date, min_month date, max_month date, twelve_month_contributor_count integer, total_code_lines integer, main_language_id integer references languages (id));")
 if(dbExistsTable(con, "analysis") && testRun) {
   dbSendQuery(con, "DROP TABLE analysis CASCADE;")
   dbSendQuery(con, analysisCreateTableQuery)
@@ -59,16 +70,6 @@ if(dbExistsTable(con, "project_licenses") && testRun) {
   dbSendQuery(con, project_licensesCreateTableQuery)
 } else {
   dbSendQuery(con, project_licensesCreateTableQuery)
-}
-
-#only run if the parsing of language info is enabled
-#TODO: category can have only 3 values, is there s.th. like factor in R for pgSQL?
-languagesCreateTableQuery <- paste("CREATE TABLE languages (id integer primary key, name varchar(40), nice_name text, category varchar(40), code bigint, comments bigint, blanks integer, comment_ratio float, projects integer, contributors integer, commits integer);")
-if(dbExistsTable(con, "languages") && testRun && parseLang) {
-  dbSendQuery(con, "DROP TABLE languages;")
-  dbSendQuery(con, languagesCreateTableQuery)
-} else {
-  dbSendQuery(con, languagesCreateTableQuery)
 }
 
 #create a trigger on the DB to auto-normalize (note: this is still kind of a hack since tag_id needs to be text instead of integer)

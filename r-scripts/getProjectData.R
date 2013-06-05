@@ -106,13 +106,54 @@ for (i in 1:apiCalls) {
     try(rating_count <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_Rating_count)[[1]])))
     try(analysis_id <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_Analysis_id)[[1]])))
     
+    #use a df and dbWriteTable because that will simply convert NAs to no entry
     tmpProjDf <- NA
     tmpProjDf <- data.frame(id=id, name=name, url=url, html_url=html_url, created_at=created_at, updated_at=updated_at, description=description, homepage_url=homepage_url, download_url=download_url, url_name=url_name, user_count=user_count, average_rating=average_rating, rating_count=rating_count, analysis_id=analysis_id)
     #some entries are duplicates because Ohloh seems to add information even for older projects so the chunks change over time.
     try(dbWriteTable(con, "projects", tmpProjDf, row.names = F, append = T))
     
     if (class(analysis_id) == "integer") {
-      print(paste("Analysis ",analysis_id," found", sep="")) 
+      print(paste("Analysis ",analysis_id," found", sep=""))
+      
+      iterator_AnalysisId <- paste("/response/result/project/analysis/id", sep="")
+      iterator_AnalysisUrl <- paste("/response/result/project/analysis/url", sep="")
+      iterator_AnalysisProject_id <- paste("/response/result/project/analysis/project_id", sep="")
+      iterator_AnalysisUpdated_at <- paste("/response/result/project/analysis/updated_at", sep="")
+      iterator_AnalysisLogged_at <- paste("/response/result/project/analysis/logged_at", sep="")
+      iterator_AnalysisMin_month <- paste("/response/result/project/analysis/min_month", sep="")
+      iterator_AnalysisMax_month <- paste("/response/result/project/analysis/max_month", sep="")
+      iterator_AnalysisTwelve_month_contributor_count <- paste("/response/result/project/analysis/twelve_month_contributor_count", sep="")
+      iterator_AnalysisTotal_code_lines <- paste("/response/result/project/analysis/total_code_lines", sep="")
+      iterator_AnalysisMain_language_id <- paste("/response/result/project/analysis/main_language_id", sep="")
+      
+      analysisId <- NA
+      analysisUrl <- NA
+      analysisProject_id <- NA
+      analysisUpdated_at <- NA
+      analysisLogged_at <- NA
+      analysisMin_month <- NA
+      analysisMax_month <- NA
+      analysisTwelve_month_contributor_count <- NA
+      analysisTotal_code_lines <- NA
+      analysisMain_language_id <- NA
+      
+      #using try around the whole statement so that the objects stay as NA if things fail
+      #this way the table cells of the database will simply be filled with nothing in that case
+      try(analysisId <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_AnalysisId)[[1]])))
+      try(analysisProject_id <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_AnalysisProject_id)[[1]])))
+      try(analysisUrl <- xmlValue(getNodeSet(tmpXML, iterator_AnalysisUrl)[[1]]))
+      try(analysisUpdated_at <- as.Date(xmlValue(getNodeSet(tmpXML, iterator_AnalysisUpdated_at)[[1]])))
+      try(analysisLogged_at <- as.Date(xmlValue(getNodeSet(tmpXML, iterator_AnalysisLogged_at)[[1]])))
+      try(analysisMin_month <- as.Date(xmlValue(getNodeSet(tmpXML, iterator_AnalysisMin_month)[[1]])))
+      try(analysisMax_month <- as.Date(xmlValue(getNodeSet(tmpXML, iterator_AnalysisMax_month)[[1]])))
+      try(analysisTwelve_month_contributor_count <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_AnalysisTwelve_month_contributor_count)[[1]])))
+      try(analysisTotal_code_lines <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_AnalysisTotal_code_lines)[[1]])))
+      try(analysisMain_language_id <- as.integer(xmlValue(getNodeSet(tmpXML, iterator_AnalysisMain_language_id)[[1]])))
+      
+      #use a df and dbWriteTable because that will simply convert NAs to no entry
+      tmpAnalysisDf <- NA
+      tmpAnalysisDf <- data.frame(id=analysisId, url=analysisUrl, project_id=analysisProject_id, updated_at=analysisUpdated_at, logged_at=analysisLogged_at, min_month=analysisMin_month, max_month=analysisMax_month, twelve_month_contributor_count=analysisTwelve_month_contributor_count, total_code_lines=analysisTotal_code_lines,  main_language_id=analysisMain_language_id)
+      try(dbWriteTable(con, "analysis", tmpAnalysisDf, row.names = F, append = T))      
     }
     
     #use xmlRoot to get the length of subnodes later on
