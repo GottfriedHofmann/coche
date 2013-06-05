@@ -42,9 +42,6 @@ if(class(tmpLangXML)[1] != "try-error"){
     langLoops <- ceiling(items_available/items_returned)
     
     print(status)
-#     print(items_returned)
-#     print(items_available)
-#     print(langLoops)
     
     #TODO: this wastes 1 API-Call, find way to save it
     for(i in 1:langLoops) {
@@ -99,19 +96,7 @@ if(class(tmpLangXML)[1] != "try-error"){
             try(langComment_ratio <- as.double(xmlValue(getNodeSet(tmpLangXML, iterator_langComment_ratio)[[1]])))
             try(langProjects <- as.integer(xmlValue(getNodeSet(tmpLangXML, iterator_langProjects)[[1]])))
             try(langContributors <- as.integer(xmlValue(getNodeSet(tmpLangXML, iterator_langContributors)[[1]])))
-            try(langCommits <- as.numeric(xmlValue(getNodeSet(tmpLangXML, iterator_langCommits)[[1]])))
-            
-#             print(langId)
-#             print(langName)
-#             print(langNice_name)
-#             print(langCategory)
-#             print(langCode)
-#             print(langComments)
-#             print(langBlanks)
-#             print(langComment_ratio)
-#             print(langProjects)
-#             print(langContributors)
-#             print(langCommits)            
+            try(langCommits <- as.numeric(xmlValue(getNodeSet(tmpLangXML, iterator_langCommits)[[1]])))          
             
             #TODO: Maybe multiple rows can be stored at once outside the loop?
             languagesQuery <- paste("INSERT INTO languages(id, name, nice_name, category, code, comments, blanks, comment_ratio, projects, contributors, commits) VALUES('",langId,"', '",langName,"', '",langNice_name,"', '",langCategory,"', '",langCode,"', '",langComments,"', '",langBlanks,"', '",langComment_ratio,"', '",langProjects,"', '",langContributors,"', '",langCommits,"')", sep="")
