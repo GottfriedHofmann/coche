@@ -56,23 +56,20 @@ for (i in 1:apiCalls) {
       try(saveXML(tmpXML, file=wd(projectDataFileName), compression = 0, ident=TRUE))
     }
     
-    #leftover from the implementation that parsed 10 projects each (leaving analysis etc out)
-    j <- 1
-    
-    iterator_Id <- paste("/response/result/project[",j,"]/id", sep="")
-    iterator_Name <- paste("/response/result/project[",j,"]/name", sep="")
-    iterator_Url <- paste("/response/result/project[",j,"]/url", sep="")
-    iterator_Html_url <- paste("/response/result/project[",j,"]/html_url", sep="")
-    iterator_Created_at <- paste("/response/result/project[",j,"]/created_at", sep="")
-    iterator_Updated_at <- paste("/response/result/project[",j,"]/updated_at", sep="")
-    iterator_Description <- paste("/response/result/project[",j,"]/description", sep="")
-    iterator_Homepage_url <- paste("/response/result/project[",j,"]/homepage_url", sep="")
-    iterator_Download_url <- paste("/response/result/project[",j,"]/download_url", sep="")
-    iterator_Url_name <- paste("/response/result/project[",j,"]/url_name", sep="")
-    iterator_User_count <- paste("/response/result/project[",j,"]/user_count", sep="")
-    iterator_Average_rating <- paste("/response/result/project[",j,"]/average_rating", sep="")
-    iterator_Rating_count <- paste("/response/result/project[",j,"]/rating_count", sep="")
-    iterator_Analysis_id <- paste("/response/result/project[",j,"]/analysis_id", sep="")
+    iterator_Id <- paste("/response/result/project/id", sep="")
+    iterator_Name <- paste("/response/result/project/name", sep="")
+    iterator_Url <- paste("/response/result/project/url", sep="")
+    iterator_Html_url <- paste("/response/result/project/html_url", sep="")
+    iterator_Created_at <- paste("/response/result/project/created_at", sep="")
+    iterator_Updated_at <- paste("/response/result/project/updated_at", sep="")
+    iterator_Description <- paste("/response/result/project/description", sep="")
+    iterator_Homepage_url <- paste("/response/result/project/homepage_url", sep="")
+    iterator_Download_url <- paste("/response/result/project/download_url", sep="")
+    iterator_Url_name <- paste("/response/result/project/url_name", sep="")
+    iterator_User_count <- paste("/response/result/project/user_count", sep="")
+    iterator_Average_rating <- paste("/response/result/project/average_rating", sep="")
+    iterator_Rating_count <- paste("/response/result/project/rating_count", sep="")
+    iterator_Analysis_id <- paste("/response/result/project/analysis_id", sep="")
     
     id <- NA
     name <- NA
@@ -166,7 +163,7 @@ for (i in 1:apiCalls) {
     
     if (numTags > 0) {
       for (k in 1:numTags) {
-        iterator_tag <- paste("/response/result/project[",j,"]/tags/tag[",k,"]", sep="")
+        iterator_tag <- paste("/response/result/project/tags/tag[",k,"]", sep="")
         tag <- NA
         tag <- try(xmlValue(getNodeSet(tmpXML, iterator_tag)[[1]]))
         if(class(tag) != "try-error") {
@@ -180,8 +177,8 @@ for (i in 1:apiCalls) {
     numLicenses <- length(tmpXMLRoot[["result"]][["project"]][["licenses"]]["license", all=TRUE])
     if(numLicenses > 0) {
       for (k in 1:numLicenses) {
-        iterator_license_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/name", sep="")
-        iterator_license_nice_name <- paste("/response/result/project[",j,"]/licenses/license[",k,"]/nice_name", sep="")
+        iterator_license_name <- paste("/response/result/project/licenses/license[",k,"]/name", sep="")
+        iterator_license_nice_name <- paste("/response/result/project/licenses/license[",k,"]/nice_name", sep="")
         
         license_name <- NA
         license_nice_name <- NA
