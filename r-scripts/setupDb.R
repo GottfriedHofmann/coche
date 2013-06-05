@@ -31,7 +31,7 @@ if(dbExistsTable(con, "languages") && testRun && parseLang) {
 
 tagsCreateTableQuery <- paste("CREATE TABLE tags (id serial primary key, tag text UNIQUE);")
 if(dbExistsTable(con, "tags") && testRun) {
-  dbSendQuery(con, "DROP TABLE tags;")
+  dbSendQuery(con, "DROP TABLE tags CASCADE;")
   dbSendQuery(con, tagsCreateTableQuery)
 } else {
   dbSendQuery(con, tagsCreateTableQuery)
@@ -70,7 +70,6 @@ if(dbExistsTable(con, "project_licenses") && testRun) {
   dbSendQuery(con, project_licensesCreateTableQuery)
 }
 
-
 #create a function to automatically normalize the tags into a table tags and project_tags
 project_normalize_tagsFunctionQuery <- paste("CREATE OR REPLACE FUNCTION normalize_tags(new_project_id INTEGER, new_tag TEXT) RETURNS BOOLEAN AS $BODY$
 DECLARE
@@ -89,3 +88,21 @@ END;
 $BODY$ LANGUAGE plpgsql;
 ")
 dbSendQuery(con, project_normalize_tagsFunctionQuery)
+
+#create a function to automatically normalize the licenses into a table licenses and project_licenses
+project_normalize_licensesFunctionQuery <- paste("CREATE OR REPLACE FUNCTION normalize_licenses(new_project_id INTEGER, new_name TEXT, new_nice_name TEXT) RETURNS BOOLEAN AS $BODY$
+DECLARE
+tempLicenseId int := 0;
+BEGIN
+tempLicenseId := (SELECT id FROM licenses WHERE name = new_name);
+IF tempLicenseId != 0 THEN
+INSERT INTO project_licenses (project_id, license_id) VALUES (new_project_id, tempLicenseId);
+RETURN TRUE;
+END IF;
+INSERT INTO licenses (name, nice_name) VALUES (new_name, new_nice_name);
+tempLicenseId := (SELECT id FROM licenses WHERE name =  new_name);
+INSERT INTO project_licenses (project_id, license_id) VALUES (new_project_id, tempLicenseId);
+RETURN TRUE;
+END;
+$BODY$ LANGUAGE plpgsql;")
+dbSendQuery(con, project_normalize_licensesFunctionQuery)

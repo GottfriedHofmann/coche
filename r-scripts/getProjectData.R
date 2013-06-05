@@ -167,6 +167,7 @@ for (i in 1:apiCalls) {
         tag <- NA
         tag <- try(xmlValue(getNodeSet(tmpXML, iterator_tag)[[1]]))
         if(class(tag) != "try-error") {
+          #normalization is done on DB-side
           tagQuery <- paste("SELECT normalize_tags(",id,", '",tag,"');", sep="")
           dbGetQuery(con, tagQuery)
         }
@@ -186,20 +187,10 @@ for (i in 1:apiCalls) {
         license_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_name)[[1]]))
         license_nice_name <- try(xmlValue(getNodeSet(tmpXML, iterator_license_nice_name)[[1]]))
         
-        #naive implementation of licenses schema. TODO: Faster alternative
         if(class(license_name) != "try-error"){
-          licensesQuery <- NA
-          licensesQuery <- paste("INSERT INTO licenses(name, nice_name) VALUES('",license_name,"','",license_nice_name,"')", sep="")
+          #normalization is done on DB-side
+          licensesQuery <- paste("SELECT normalize_licenses(",id,", '",license_name,"', '",license_nice_name,"');", sep="")
           dbGetQuery(con, licensesQuery)
-          
-          license_idQuery <- NA
-          license_id <- NA
-          license_idQuery <- paste("SELECT id FROM licenses WHERE name='",license_name,"';", sep="")
-          license_id <- dbGetQuery(con, license_idQuery)
-          
-          project_licensesQuery <- NA
-          project_licensesQuery <- paste("INSERT INTO project_licenses(project_id, license_id) VALUES(",id,", ",license_id,")", sep="")
-          dbGetQuery(con, project_licensesQuery)
           }
         }
       }
