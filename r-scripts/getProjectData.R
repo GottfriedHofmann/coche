@@ -167,7 +167,7 @@ for (i in 1:apiCalls) {
         tag <- NA
         tag <- try(xmlValue(getNodeSet(tmpXML, iterator_tag)[[1]]))
         if(class(tag) != "try-error") {
-          tagQuery <- paste("INSERT INTO project_tags(project_id, tag_id) VALUES('",id,"', '",tag,"')", sep="")
+          tagQuery <- paste("SELECT normalize_tags(",id,", '",tag,"');", sep="")
           dbGetQuery(con, tagQuery)
         }
       }

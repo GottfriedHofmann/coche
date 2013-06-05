@@ -37,9 +37,7 @@ if(dbExistsTable(con, "tags") && testRun) {
   dbSendQuery(con, tagsCreateTableQuery)
 }
 
-#new setup for project_tags to work with a trigger for auto-normalization
-#project_tagsCreateTableQuery <- paste("CREATE TABLE project_tags (project_id integer references projects (id), tag_id integer references tags (id), id serial primary key);")
-project_tagsCreateTableQuery <- paste("CREATE TABLE project_tags (project_id integer references projects (id), tag_id text, id serial primary key);")
+project_tagsCreateTableQuery <- paste("CREATE TABLE project_tags (project_id integer references projects (id), tag_id integer references tags (id), id serial primary key);")
 if(dbExistsTable(con, "project_tags") && testRun) {
   dbSendQuery(con, "DROP TABLE project_tags;")
   dbSendQuery(con, project_tagsCreateTableQuery)
@@ -72,33 +70,22 @@ if(dbExistsTable(con, "project_licenses") && testRun) {
   dbSendQuery(con, project_licensesCreateTableQuery)
 }
 
-#create a trigger on the DB to auto-normalize (note: this is still kind of a hack since tag_id needs to be text instead of integer)
-project_tagsTriggerQuery <- paste("CREATE OR REPLACE FUNCTION normalize_tags() RETURNS TRIGGER AS $$
-                                  DECLARE
-                                  foo int := 0;
-                                  BEGIN
-                                  IF (SELECT NEW.tag_id ~ '^[0-9]+$') THEN
-                                  RETURN NEW;
-                                  
-                                  END IF;
-                                  foo := (SELECT id FROM tags WHERE tag = NEW.tag_id);
-                                  IF foo != 0 THEN
-                                  -- IF NEW.tag_id IN (SELECT tag AS tmpTag FROM tags) THEN
-                                  NEW.tag_id := foo;
-                                  RETURN NEW;
-                                  END IF;
-                                  -- ELSE
-                                  INSERT INTO tags (tag) VALUES (NEW.tag_id);
-                                  NEW.tag_id := (SELECT id AS tagId FROM tags WHERE tag =  NEW.tag_id);
-                                  RETURN NEW;
-                                  -- END IF;
-                                  END;
-                                  $$ LANGUAGE plpgsql;
-                                  
-                                  CREATE TRIGGER tagsNormalizeTrg
-                                  BEFORE INSERT OR UPDATE
-                                  ON project_tags
-                                  FOR EACH ROW
-                                  EXECUTE PROCEDURE normalize_tags();
-                                  ")
-dbSendQuery(con, project_tagsTriggerQuery)
+
+#create a function to automatically normalize the tags into a table tags and project_tags
+project_normalize_tagsFunctionQuery <- paste("CREATE OR REPLACE FUNCTION normalize_tags(new_project_id INTEGER, new_tag TEXT) RETURNS BOOLEAN AS $BODY$
+DECLARE
+temp_tag int := 0;
+BEGIN
+temp_tag := (SELECT id FROM tags WHERE tag = new_tag);
+IF temp_tag != 0 THEN
+INSERT INTO project_tags (project_id, tag_id) VALUES (new_project_id, temp_tag);
+RETURN TRUE;
+END IF;
+INSERT INTO tags (tag) VALUES (new_tag);
+temp_tag := (SELECT id FROM tags WHERE tag =  new_tag);
+INSERT INTO project_tags (project_id, tag_id) VALUES (new_project_id, temp_tag);
+RETURN TRUE;
+END;
+$BODY$ LANGUAGE plpgsql;
+")
+dbSendQuery(con, project_normalize_tagsFunctionQuery)
