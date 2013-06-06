@@ -115,7 +115,7 @@ for (i in currentMaxId+1:apiCalls) {
     #some entries are duplicates because Ohloh seems to add information even for older projects so the chunks change over time.
     try(dbWriteTable(con, "projects", tmpProjDf, row.names = F, append = T))
     
-    if (class(analysis_id) == "integer") {
+    if (!is.na(analysis_id)) {
       print(paste("Analysis ",analysis_id," found", sep=""))
       
       iterator_AnalysisId <- paste("/response/result/project/analysis/id", sep="")
