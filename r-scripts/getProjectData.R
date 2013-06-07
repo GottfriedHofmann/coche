@@ -42,12 +42,14 @@ currentMaxId <- NA
 currentMaxId <- dbGetQuery(con, "SELECT max(id) from projects;")
 if (is.na(currentMaxId)) {
   currentMaxId <- 0
-}
+} else currentMaxId <- currentMaxId[[1]]
+#parsing projects will start at one step above the last parsed one.
+currentMaxId <- currentMaxId +1
 
 #stores project information in the database and locally on disk (optional)
 #loop runs in steps of 'apiCalls' due to API key restrictions
 system.time(
-for (i in currentMaxId+1:apiCalls) {
+for (i in currentMaxId:(apiCalls+currentMaxId)) {
   actURL <- paste("http://www.ohloh.net/projects/",i,".xml?api_key=",apiKey, sep="")
   print(actURL)
   

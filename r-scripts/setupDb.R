@@ -15,7 +15,7 @@ projectsCreateTableQuery <- paste("CREATE TABLE projects (id integer primary key
 if(dbExistsTable(con, "projects") && testRun) {   
   dbSendQuery(con, "DROP TABLE projects CASCADE;")
   dbSendQuery(con, projectsCreateTableQuery)
-} else {
+} else if (!dbExistsTable(con, "projects")){
   dbSendQuery(con, projectsCreateTableQuery)
 }
 
@@ -25,7 +25,7 @@ languagesCreateTableQuery <- paste("CREATE TABLE languages (id integer primary k
 if(dbExistsTable(con, "languages") && testRun && parseLang) {
   dbSendQuery(con, "DROP TABLE languages;")
   dbSendQuery(con, languagesCreateTableQuery)
-} else if (parseLang){
+} else if (!dbExistsTable(con, "languages") && parseLang){
   dbSendQuery(con, languagesCreateTableQuery)
 }
 
@@ -33,7 +33,7 @@ tagsCreateTableQuery <- paste("CREATE TABLE tags (id serial primary key, tag tex
 if(dbExistsTable(con, "tags") && testRun) {
   dbSendQuery(con, "DROP TABLE tags CASCADE;")
   dbSendQuery(con, tagsCreateTableQuery)
-} else {
+} else if (!dbExistsTable(con, "tags")){
   dbSendQuery(con, tagsCreateTableQuery)
 }
 
@@ -41,7 +41,7 @@ project_tagsCreateTableQuery <- paste("CREATE TABLE project_tags (project_id int
 if(dbExistsTable(con, "project_tags") && testRun) {
   dbSendQuery(con, "DROP TABLE project_tags;")
   dbSendQuery(con, project_tagsCreateTableQuery)
-} else {
+} else if (!dbExistsTable(con, "project_tags")){
   dbSendQuery(con, project_tagsCreateTableQuery)
 }
 
@@ -50,7 +50,7 @@ analysisCreateTableQuery <- paste("CREATE TABLE analysis (id integer primary key
 if(dbExistsTable(con, "analysis") && testRun) {
   dbSendQuery(con, "DROP TABLE analysis CASCADE;")
   dbSendQuery(con, analysisCreateTableQuery)
-} else {
+} else if(!dbExistsTable(con, "analysis")) {
   dbSendQuery(con, analysisCreateTableQuery)
 }
 
@@ -58,7 +58,7 @@ licensesCreateTableQuery <- paste("CREATE TABLE licenses (name varchar(40) UNIQU
 if(dbExistsTable(con, "licenses") && testRun) {
   dbSendQuery(con, "DROP TABLE licenses CASCADE;")
   dbSendQuery(con, licensesCreateTableQuery)
-} else {
+} else if (!dbExistsTable(con, "licenses")){
   dbSendQuery(con, licensesCreateTableQuery)
 }
 
@@ -66,7 +66,7 @@ project_licensesCreateTableQuery <- paste("CREATE TABLE project_licenses (id ser
 if(dbExistsTable(con, "project_licenses") && testRun) {
   dbSendQuery(con, "DROP TABLE project_licenses;")
   dbSendQuery(con, project_licensesCreateTableQuery)
-} else {
+} else if (!dbExistsTable(con, "project_licenses")){
   dbSendQuery(con, project_licensesCreateTableQuery)
 }
 
