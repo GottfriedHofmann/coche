@@ -48,15 +48,22 @@ currentMaxId <- currentMaxId +1
 
 #stores project information in the database and locally on disk (optional)
 #loop runs in steps of 'apiCalls' due to API key restrictions
+i <- currentMaxId
 system.time(
-for (i in currentMaxId:(apiCalls+currentMaxId)) {
+while (i < (apiCalls+currentMaxId)) {
   actURL <- paste("http://www.ohloh.net/projects/",i,".xml?api_key=",apiKey, sep="")
   print(actURL)
   
   tmpXML <- NA
   tmpXML <- try(xmlParse(actURL))
   
-  if(class(tmpXML)[1] != "try-error"){
+  #whenever the URL could not be parsed because the project Id was not available that does not count as an API-access
+  #so let's increase the number of calls we will be making by 1
+  if(class(tmpXML)[1] == "try-error") {
+    i <- i+1
+    apiCalls <- apiCalls + 1
+    next
+  } else {
     if(storeXML == TRUE){
       projectDataFileName <- paste(projectsDir, "/p.",i,".xml", sep="")
       #saves the retrieved and parsed XML-file in the local directory specified above.
@@ -202,6 +209,7 @@ for (i in currentMaxId:(apiCalls+currentMaxId)) {
           }
         }
       }
+    i <- i+1
     }
   }
 )
