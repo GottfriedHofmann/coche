@@ -55,7 +55,7 @@ if(dbExistsTable(con, "analysis") && testRun) {
 }
 
 #activity facts are parsed by analysis_id
-activity_factsCreateTableQuery <- paste("CREATE TABLE activity_facts (month date, code_added integer, code_removed integer, comments_added integer, comments_removed integer, blanks_added integer, blanks_removed integer, commits integer, contributors integer, analysis_id integer references analysis(id), id serial primary key);")
+activity_factsCreateTableQuery <- paste("CREATE TABLE activity_facts (month date, code_added integer, code_removed integer, comments_added integer, comments_removed integer, blanks_added integer, blanks_removed integer, commits integer, contributors integer, analysis_id integer references analysis(id), id integer primary key);")
 if(dbExistsTable(con, "activity_facts") && testRun) {
   dbSendQuery(con, "DROP TABLE activity_facts CASCADE;")
   dbSendQuery(con, activity_factsCreateTableQuery)
