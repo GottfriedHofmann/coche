@@ -12,8 +12,10 @@ wd <- function(Dir) {
 
 #login credentials etc. are stored in config.R
 source(wd("./r-scripts/config.R"))
-#this function allows you to find out which project Id on ohloh is the latest
+#find out which project Id on ohloh is the latest
 source(wd("./r-scripts/getLatestProjectId.R"))
+#if the data has been partially parsed, get the current state
+source(wd("./r-scripts/getCurrentParseLevel.R"))
 
 #set up a driver for the database connection
 drv <- dbDriver("PostgreSQL")
@@ -39,10 +41,7 @@ if(storeXML == TRUE) {
 }
 
 currentMaxId <- NA
-currentMaxId <- dbGetQuery(con, "SELECT max(id) from projects;")
-if (is.na(currentMaxId)) {
-  currentMaxId <- 0
-} else currentMaxId <- currentMaxId[[1]]
+currentMaxId <- getCurrentParseLevel("project_id")
 #parsing projects will start at one step above the last parsed one.
 currentMaxId <- currentMaxId +1
 
