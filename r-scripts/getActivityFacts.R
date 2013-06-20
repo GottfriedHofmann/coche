@@ -53,9 +53,11 @@ currentParseLevel <- currentParseLevel +1
 #stores activity_facts in the database and locally on disk (optional)
 #loop runs in steps of 'apiCalls' due to API key restrictions
 j <- currentParseLevel
-uniqueId <- currentParseLevel
+uniqueId <- NA
+uniqueId <- getCurrentParseLevel("count_analysis_id")
+uniqueId <- uniqueId +1
 system.time(
-while (j < (apiCalls+currentMaxId)) {
+while (j < (apiCalls+currentParseLevel)) {
   activityURL <- paste("http://www.ohloh.net/p/",analysisIds[[1]][j],"/analyses/",analysisIds[[2]][j],"/activity_facts.xml?api_key=",apiKey, sep="")
   print(activityURL)
   
@@ -94,5 +96,7 @@ while (j < (apiCalls+currentMaxId)) {
   }
   
   j <- j+1
-}
+})
 
+#close the connection to avoid orphan connection if running the script multiple times
+dbDisconnect(con)
