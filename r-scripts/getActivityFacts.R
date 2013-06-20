@@ -12,6 +12,8 @@ wd <- function(Dir) {
 #login credentials, options etc. are stored in config.R
 source(wd("./r-scripts/config.R"))
 
+source(wd("./r-scripts/getCurrentParseLevel.R"))
+
 #TODO: maybe it's better to make the file a function entirely
 #and thus not create a new connection to the db
 #set up a driver for the database connection
