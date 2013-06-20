@@ -17,7 +17,7 @@ source(wd("./r-scripts/config.R"))
 #set up a driver for the database connection
 drvAct <- dbDriver("PostgreSQL")
 #database information is grabbed from config.R
-conAct <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
+conAct <- dbConnect(drvAct, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
 
 #TODO: extend function once more data sources are implemented (like data frames)
 getAnalysisIds <- function() {
