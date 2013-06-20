@@ -10,7 +10,7 @@ getCurrentParseLevel <- function(idType) {
   if (idType == "project_id") {
     parseLevelQuery <- paste("SELECT max(id) from projects;")
   } else if (idType == "analysis_id") {
-    parseLevelQuery <- paste("SELECT count(analysis_id) from activity_facts;")
+    parseLevelQuery <- paste("SELECT count(a) FROM (SELECT DISTINCT analysis_id AS a FROM activity_facts) AS analysis_unique;")
   } else {
     print("specified idType not supported")
     return(NA)

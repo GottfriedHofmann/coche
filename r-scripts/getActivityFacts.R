@@ -17,9 +17,9 @@ source(wd("./r-scripts/getCurrentParseLevel.R"))
 #TODO: maybe it's better to make the file a function entirely
 #and thus not create a new connection to the db
 #set up a driver for the database connection
-drvAct <- dbDriver("PostgreSQL")
+drv <- dbDriver("PostgreSQL")
 #database information is grabbed from config.R
-conAct <- dbConnect(drvAct, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
+con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
 
 #TODO: extend function once more data sources are implemented (like data frames)
 getAnalysisIds <- function() {
@@ -27,7 +27,7 @@ getAnalysisIds <- function() {
   analysisIdsTmp <- NA
   #analysisIds <- data.frame('analysis_id')
   analysisIdQuery <- paste("SELECT id, analysis_id FROM projects;", sep="")
-  analysisIdsWithNAs <- dbGetQuery(conAct, analysisIdQuery)
+  analysisIdsWithNAs <- dbGetQuery(con, analysisIdQuery)
   analysisIdsTmp <- na.omit(analysisIdsWithNAs)
   #return analysisIds as vector instead of DF inside of DF
   return(analysisIdsTmp)
