@@ -1,5 +1,5 @@
 #parses activity facts from given analysis_ids
-#TODO: parsing by project_id
+#TODO: parsing by project_id, returning the activity facts of the latest analysis
 
 require("XML")
 require("RPostgreSQL")
@@ -11,8 +11,8 @@ wd <- function(Dir) {
 
 #login credentials, options etc. are stored in config.R
 source(wd("./r-scripts/config.R"))
-
 source(wd("./r-scripts/getCurrentParseLevel.R"))
+source(wd("./r-scripts/getIds.R"))
 
 #TODO: maybe it's better to make the file a function entirely
 #and thus not create a new connection to the db
@@ -20,18 +20,6 @@ source(wd("./r-scripts/getCurrentParseLevel.R"))
 drv <- dbDriver("PostgreSQL")
 #database information is grabbed from config.R
 con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
-
-#TODO: extend function once more data sources are implemented (like data frames)
-getAnalysisIds <- function() {
-  analysisIdsWithNAs <- NA
-  analysisIdsTmp <- NA
-  #analysisIds <- data.frame('analysis_id')
-  analysisIdQuery <- paste("SELECT id, analysis_id FROM projects;", sep="")
-  analysisIdsWithNAs <- dbGetQuery(con, analysisIdQuery)
-  analysisIdsTmp <- na.omit(analysisIdsWithNAs)
-  #return analysisIds as vector instead of DF inside of DF
-  return(analysisIdsTmp)
-}
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -43,7 +31,7 @@ if(storeXML == TRUE) {
 }
 
 analysisIds <- NA
-analysisIds <- getAnalysisIds()
+analysisIds <- getIds("analysis_id")
 
 currentParseLevel <- NA
 currentParseLevel <- getCurrentParseLevel("analysis_id")
