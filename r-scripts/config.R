@@ -28,8 +28,7 @@ storeXML <- TRUE
 #where to store xml-files?
 projectsDir <- "data/xml/projects"
 activity_factsDir <- "data/xml/activity_facts"
-
-#where to store xml-files for languages?
+enlistmentsDir <- "data/xml/enlistments"
 languagesDir <- "data/xml/languages"
 
 #parse info on programming languages?

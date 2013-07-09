@@ -79,7 +79,7 @@ if(dbExistsTable(con, "project_licenses") && testRun) {
   dbSendQuery(con, project_licensesCreateTableQuery)
 }
 
-repositoriesCreateTableQuery <- paste("CREATE TABLE repositories (id integer primary key, project_id integer references projects (id), repository_id integer references repositories (id) );")
+repositoriesCreateTableQuery <- paste("CREATE TABLE repositories (id integer primary key, type text, url text, username text, password text, logged_at date, commits integer, ohloh_job_status text);")
 if(dbExistsTable(con, "repositories") && testRun) {
   dbSendQuery(con, "DROP TABLE repositories;")
   dbSendQuery(con, repositoriesCreateTableQuery)
@@ -87,7 +87,7 @@ if(dbExistsTable(con, "repositories") && testRun) {
   dbSendQuery(con, repositoriesCreateTableQuery)
 }
 
-enlistmentsCreateTableQuery <- paste("CREATE TABLE enlistments (id integer primary key, type text, url text, username text, password text, logged_at date, commits integer, ohloh_job_status text);")
+enlistmentsCreateTableQuery <- paste("CREATE TABLE enlistments (id integer primary key, project_id integer references projects (id), repository_id integer references repositories (id) );")
 if(dbExistsTable(con, "enlistments") && testRun) {
   dbSendQuery(con, "DROP TABLE enlistments;")
   dbSendQuery(con, enlistmentsCreateTableQuery)

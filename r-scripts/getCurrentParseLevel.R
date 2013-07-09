@@ -9,6 +9,8 @@ getCurrentParseLevel <- function(idType) {
   currentMaxId <- NA
   if (idType == "project_id") {
     parseLevelQuery <- paste("SELECT max(id) from projects;")
+  } else if (idType == "enlistments") {
+    parseLevelQuery <- paste("SELECT count(project_id) from enlistments;")
   } else if (idType == "analysis_id") {
     parseLevelQuery <- paste("SELECT count(a) FROM (SELECT DISTINCT analysis_id AS a FROM activity_facts) AS analysis_unique;")
   } else if (idType == "count_analysis_id") {
