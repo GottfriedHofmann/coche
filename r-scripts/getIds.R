@@ -7,7 +7,7 @@ getIds <- function(idType) {
   if(idType == "analysis_id") {
     idQuery <- paste("SELECT id, analysis_id FROM projects;", sep="")
   } else if (idType == "project_id") {
-    idQuery <- paste("SELECT id FROM projects;", sep="")
+    idQuery <- paste("SELECT id FROM projects ORDER BY id;", sep="")
   } else {
     print("specified idType not supported")
     return(NA)

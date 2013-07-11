@@ -35,7 +35,7 @@ projectIds <- getIds("project_id")[[1]]
 currentEnlistmentsParseLevel <- NA
 currentEnlistmentsParseLevel <- getCurrentParseLevel("enlistments")
 #parsing projects will start at one step above the last parsed one.
-currentEnlistmentsParseLevel <- currentEnlistmentsParseLevel +1
+currentEnlistmentsParseLevel <- match(currentEnlistmentsParseLevel, projectIds) +1
 
 j <- NA
 j <- currentEnlistmentsParseLevel
