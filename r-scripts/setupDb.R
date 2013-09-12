@@ -11,7 +11,7 @@ wd <- function(Dir) {
 
 #set up the database table structure
 #if testRun is set to TRUE, drop old tables and create new ones
-projectsCreateTableQuery <- paste("CREATE TABLE projects (id integer primary key, name varchar(40), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
+projectsCreateTableQuery <- paste("CREATE TABLE projects (id integer primary key, name varchar(100), url text, html_url text, created_at date, updated_at date, description text, homepage_url text, download_url text, url_name text, user_count integer, average_rating double precision, rating_count integer, analysis_id integer);")
 if(dbExistsTable(con, "projects") && testRun) {   
   dbSendQuery(con, "DROP TABLE projects CASCADE;")
   dbSendQuery(con, projectsCreateTableQuery)
@@ -63,7 +63,7 @@ if(dbExistsTable(con, "activity_facts") && testRun) {
   dbSendQuery(con, activity_factsCreateTableQuery)
 }
 
-licensesCreateTableQuery <- paste("CREATE TABLE licenses (name varchar(40) UNIQUE, nice_name text, id serial primary key);")
+licensesCreateTableQuery <- paste("CREATE TABLE licenses (name varchar(100) UNIQUE, nice_name text, id serial primary key);")
 if(dbExistsTable(con, "licenses") && testRun) {
   dbSendQuery(con, "DROP TABLE licenses CASCADE;")
   dbSendQuery(con, licensesCreateTableQuery)
