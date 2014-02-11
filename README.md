@@ -16,4 +16,4 @@ To run coche, an [API key from ohloh](http://www.ohloh.com/accounts/me/api_keys/
 
 ### Configuration
 
-Configuration is stored in config.R. Insert your API key and database credentials here.
+Configuration is stored in [config.R](r-scripts/config.R). Insert your API key and database credentials here.
