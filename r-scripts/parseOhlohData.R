@@ -50,7 +50,7 @@ while(TRUE) {
     print("API call limit exceeded for this session.")
     print("Waiting 24 hours before continuing")
     print(paste("Current time: ",Sys.time(), sep=""))
-    Sys.sleep(60)
+    Sys.sleep(86400)
     sessionApiCalls <- apiCalls
     next
   }
@@ -61,7 +61,7 @@ while(TRUE) {
     print("API call limit exceeded for this session.")
     print("Waiting 24 hours before continuing")
     print(paste("Current time: ",Sys.time(), sep=""))
-    Sys.sleep(60)
+    Sys.sleep(86400)
     sessionApiCalls <- apiCalls
     next
   }
@@ -72,7 +72,7 @@ while(TRUE) {
     print("API call limit exceeded for this session.")
     print("Waiting 24 hours before continuing")
     print(paste("Current time: ",Sys.time(), sep=""))
-    Sys.sleep(60)
+    Sys.sleep(86400)
     sessionApiCalls <- apiCalls
     next
   }
