@@ -2,34 +2,37 @@
 #TODO: ten sets for each request
 #opt: saves each set as XML in ./data/xml so further info can be aquired by demand from disk
 
-require("XML")
-require("RPostgreSQL")
+# ### the following part can be un-commented if you want to run the script directly
+# require("XML")
+# require("RPostgreSQL")
+# 
+# #function to set a working directory for the project
+# wd <- function(Dir) {
+#   return(paste("~/git-repositories/coche/",Dir,sep=""))
+# }
+# 
+# #login credentials etc. are stored in config.R
+# source(wd("./r-scripts/config.R"))
+# 
+# #set up a driver for the database connection
+# drv <- dbDriver("PostgreSQL")
+# 
+# #database information is grabbed from config.R
+# con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
+# #set up the tables and triggers for the db
+# source(wd("./r-scripts/setupDb.R"))
+# 
+# #this should need to be run only once
+# if(parseLang) {
+#   source(wd("./r-scripts/getLanguagesData.R"))
+# }
+# ###
 
-#function to set a working directory for the project
-wd <- function(Dir) {
-  return(paste("~/git-repositories/coche/",Dir,sep=""))
-}
 
-#login credentials etc. are stored in config.R
-source(wd("./r-scripts/config.R"))
-#find out which project Id on ohloh is the latest
-source(wd("./r-scripts/getLatestProjectId.R"))
+getProjectData <- function(parseRange, sessionApiCalls) {
+
 #if the data has been partially parsed, get the current state
 source(wd("./r-scripts/getCurrentParseLevel.R"))
-
-#set up a driver for the database connection
-drv <- dbDriver("PostgreSQL")
-
-#database information is grabbed from config.R
-con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
-
-#set up the tables and triggers for the db
-source(wd("./r-scripts/setupDb.R"))
-
-#this should need to be run only once
-if(parseLang) {
-  source(wd("./r-scripts/getLanguagesData.R"))
-}
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -45,11 +48,11 @@ currentMaxId <- getCurrentParseLevel("project_id")
 #parsing projects will start at one step above the last parsed one.
 currentMaxId <- currentMaxId +1
 
+i <- max(currentMaxId, min(parseRange))
+
 #stores project information in the database and locally on disk (optional)
-#loop runs in steps of 'apiCalls' due to API key restrictions
-i <- currentMaxId
-system.time(
-while (i < (apiCalls+currentMaxId)) {
+#loop runs in steps of 'sessionApiCalls' due to API key restrictions
+while ((i <= max(parseRange)) && (sessionApiCalls > 0)) {
   actURL <- paste("http://www.ohloh.net/projects/",i,".xml?api_key=",apiKey, sep="")
   print(actURL)
   
@@ -57,10 +60,9 @@ while (i < (apiCalls+currentMaxId)) {
   tmpXML <- try(xmlParse(actURL))
   
   #whenever the URL could not be parsed because the project Id was not available that does not count as an API-access
-  #so let's increase the number of calls we will be making by 1
   if(class(tmpXML)[1] == "try-error") {
     i <- i+1
-    apiCalls <- apiCalls + 1
+    #sessionApiCalls <- sessionApiCalls + 1
     next
   } else {
     if(storeXML == TRUE){
@@ -209,12 +211,17 @@ while (i < (apiCalls+currentMaxId)) {
         }
       }
     i <- i+1
+    sessionApiCalls <- sessionApiCalls - 1
     }
   }
-)
+
+return(sessionApiCalls)
+
 
 #close the connection to avoid orphan connection if running the script multiple times
-dbDisconnect(con)
+#dbDisconnect(con)
+
+}
 
 #quit(save = "no", status = 0, runLast = FALSE)
 

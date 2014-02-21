@@ -1,25 +1,30 @@
 #parses activity facts from given analysis_ids
 #TODO: parsing by project_id, returning the activity facts of the latest analysis
 
-require("XML")
-require("RPostgreSQL")
+# ### the following part can be un-commented if you want to run the script directly
+# require("XML")
+# require("RPostgreSQL")
+# 
+# #function to set a working directory for the project
+# wd <- function(Dir) {
+#   return(paste("~/git-repositories/coche/",Dir,sep=""))
+# }
+# 
+# #login credentials, options etc. are stored in config.R
+# source(wd("./r-scripts/config.R"))
+# 
+# #set up a driver for the database connection
+# drv <- dbDriver("PostgreSQL")
+# #database information is grabbed from config.R
+# con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
+# ###
 
-#function to set a working directory for the project
-wd <- function(Dir) {
-  return(paste("~/git-repositories/coche/",Dir,sep=""))
-}
+#stores activity_facts in the database and locally on disk (optional)
+#loop runs in steps of 'sessionApiCalls' due to API key restrictions
+getActivityFacts <- function(parseRange, sessionApiCalls) {
 
-#login credentials, options etc. are stored in config.R
-source(wd("./r-scripts/config.R"))
 source(wd("./r-scripts/getCurrentParseLevel.R"))
 source(wd("./r-scripts/getIds.R"))
-
-#TODO: maybe it's better to make the file a function entirely
-#and thus not create a new connection to the db
-#set up a driver for the database connection
-drv <- dbDriver("PostgreSQL")
-#database information is grabbed from config.R
-con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -32,21 +37,33 @@ if(storeXML == TRUE) {
 
 analysisIds <- NA
 analysisIds <- getIds("analysis_id")
+activityFactsProjectIds <- NA
+activityFactsProjectIds <- getIds("activity_facts_project_id")
+
+toParse <- intersect(parseRange, analysisIds[[1]])
+try(toParse <- setdiff(toParse, activityFactsProjectIds[[1]]))
+toParse <- sort(toParse)
 
 currentParseLevel <- NA
 currentParseLevel <- getCurrentParseLevel("analysis_id")
 #parsing projects will start at one step above the last parsed one.
 currentParseLevel <- currentParseLevel +1
 
-#stores activity_facts in the database and locally on disk (optional)
-#loop runs in steps of 'apiCalls' due to API key restrictions
-j <- currentParseLevel
+
+#j <- currentParseLevel
+#j <- min(toParse)
+j <- 1
+
 uniqueId <- NA
 uniqueId <- getCurrentParseLevel("count_analysis_id")
 uniqueId <- uniqueId +1
-system.time(
-while (j < (apiCalls+currentParseLevel)) {
-  activityURL <- paste("http://www.ohloh.net/p/",analysisIds[[1]][j],"/analyses/",analysisIds[[2]][j],"/activity_facts.xml?api_key=",apiKey, sep="")
+
+while ((j <= length(toParse)) && (sessionApiCalls > 0)) {
+  projectId <- NA
+  projectId <- toParse[[j]]
+  analysisId <- NA
+  analysisId <- analysisIds[which(analysisIds[[1]] == projectId),][[2]]
+  activityURL <- paste("http://www.ohloh.net/p/",projectId,"/analyses/",analysisId,"/activity_facts.xml?api_key=",apiKey, sep="")
   print(activityURL)
   
   tmpActXML <- NA
@@ -57,7 +74,7 @@ while (j < (apiCalls+currentParseLevel)) {
   #so let's increase the number of calls we will be making by 1
   if(class(tmpActXML)[1] == "try-error") {
     j <- j+1
-    apiCalls <- apiCalls + 1
+    #sessionApiCalls <- sessionApiCalls + 1
     next
   } else {
     if(storeXML == TRUE){
@@ -78,13 +95,20 @@ while (j < (apiCalls+currentParseLevel)) {
     try(tmp[['month']] <- as.Date(tmp[['month']]))
     try(tmp[['contributors']] <- as.factor(tmp[['contributors']]))
     try(tmp[['analysis_id']] <- analysisIds[[2]][j])
+    try(tmp[['project_id']] <- projectId)
     try(tmp[['id']] <- c((uniqueOld+1):uniqueId))
+    
     
     dbWriteTable(con, "activity_facts", tmp, row.names = F, append = T)
   }
   
   j <- j+1
-})
+  sessionApiCalls <- sessionApiCalls-1
+}
+
+return(sessionApiCalls)
+
+}
 
 #close the connection to avoid orphan connection if running the script multiple times
-dbDisconnect(con)
+#dbDisconnect(con)

@@ -1,24 +1,29 @@
-#parses enlistments and repositories by project_id
+#parses enlistments and repositories by project_id from ohloh and saves them to a postgreSQL database
 
-require("XML")
-require("RPostgreSQL")
+# ### the following part can be un-commented if you want to run the script directly
+# require("XML")
+# require("RPostgreSQL")
+# 
+# #function to set a working directory for the project
+# wd <- function(Dir) {
+#   return(paste("~/git-repositories/coche/",Dir,sep=""))
+# }
+# 
+# #login credentials, options etc. are stored in config.R
+# source(wd("./r-scripts/config.R"))
+# 
+# #TODO: maybe it's better to make the file a function entirely
+# #and thus not create a new connection to the db
+# #set up a driver for the database connection
+# drv <- dbDriver("PostgreSQL")
+# #database information is grabbed from config.R
+# con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
+# ###
 
-#function to set a working directory for the project
-wd <- function(Dir) {
-  return(paste("~/git-repositories/coche/",Dir,sep=""))
-}
+getEnlistments <- function(parseRange,sessionApiCalls) {
 
-#login credentials, options etc. are stored in config.R
-source(wd("./r-scripts/config.R"))
 source(wd("./r-scripts/getIds.R"))
 source(wd("./r-scripts/getCurrentParseLevel.R"))
-
-#TODO: maybe it's better to make the file a function entirely
-#and thus not create a new connection to the db
-#set up a driver for the database connection
-drv <- dbDriver("PostgreSQL")
-#database information is grabbed from config.R
-con <- dbConnect(drv, host=dbHost, dbname=dbName, user=dbUser, password=dbPass)
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -31,17 +36,24 @@ if(storeXML == TRUE) {
 
 projectIds <- NA
 projectIds <- getIds("project_id")[[1]]
+enlistmentsProjectIds <- NA
+enlistmentsProjectIds <- getIds("enlistments_project_id")
+
+toParse <- intersect(parseRange, projectIds)
+try(toParse <- setdiff(toParse, enlistmentsProjectIds[[1]]))
 
 currentEnlistmentsParseLevel <- NA
 currentEnlistmentsParseLevel <- getCurrentParseLevel("enlistments")
 #parsing projects will start at one step above the last parsed one.
 currentEnlistmentsParseLevel <- match(currentEnlistmentsParseLevel, projectIds) +1
+currentEnlistmentsParseLevel <- match(currentEnlistmentsParseLevel, parseRange)
 
 j <- NA
-j <- currentEnlistmentsParseLevel
-system.time(
-while (j < (apiCalls+currentEnlistmentsParseLevel)) {
-  enlistmentsURL <- paste("http://www.ohloh.net/projects/",projectIds[j],"/enlistments.xml?api_key=",apiKey, sep="")
+#j <- currentEnlistmentsParseLevel
+j <- 1
+
+while ((j <= length(toParse))&& (sessionApiCalls > 0)) {
+  enlistmentsURL <- paste("http://www.ohloh.net/projects/",toParse[j],"/enlistments.xml?api_key=",apiKey, sep="")
   print(enlistmentsURL)
   
   tmpEnlXML <- NA
@@ -52,7 +64,7 @@ while (j < (apiCalls+currentEnlistmentsParseLevel)) {
   #so let's increase the number of calls we will be making by 1
   if(class(tmpEnlXML)[1] == "try-error") {
     j <- j+1
-    apiCalls <- apiCalls + 1
+    #sessionApiCalls <- sessionApiCalls + 1
     next
   } else {
     if(storeXML == TRUE){
@@ -65,7 +77,7 @@ while (j < (apiCalls+currentEnlistmentsParseLevel)) {
     #projects can have multiple repos that are returned by the enlistment
     numRepos <- NA
     numRepos <- as.integer(xmlValue(getNodeSet(tmpEnlXML, "/response/items_returned")[[1]]))
-    print(numRepos)
+    print(paste("Number of repositories this project is using: ",numRepos, sep=""))
     
     if(numRepos > 0) {      
       for (k in 1:numRepos) {
@@ -116,8 +128,13 @@ while (j < (apiCalls+currentEnlistmentsParseLevel)) {
       }
     }
     j <- j+1
+    sessionApiCalls <- sessionApiCalls-1
   }
-})
+}
+
+return(sessionApiCalls)
+
+}
 
 #close the connection to avoid orphan connection if running the script multiple times
-dbDisconnect(con)
+#dbDisconnect(con)

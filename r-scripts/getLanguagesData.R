@@ -2,12 +2,7 @@
 #should only be run when there is already a connection for the database
 #and config.R is alread loaded
 
-require("RPostgreSQL")
-
-#function to set a working directory for the project
-wd <- function(Dir) {
-  return(paste("~/git-repositories/coche/",Dir,sep=""))
-}
+getLanguagesData <- function(sessionApiCalls) {
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
 #check wether the directory is already there and otherwise create it
@@ -105,9 +100,12 @@ if(class(tmpLangXML)[1] != "try-error"){
         }      
       }
     }
-    #since some API calls have been used we need to remove the from the global variable that defines how many are left
-    apiCalls <- apiCalls - langLoops - 1
+    #since some API calls have been used we need to remove those from the global variable that defines how many are left
+    sessionApiCalls <- sessionApiCalls - langLoops - 1
+    return(sessionApiCalls)
   }
+}
+
 }
   
   
