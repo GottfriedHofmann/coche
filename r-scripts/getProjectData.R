@@ -70,10 +70,10 @@ while ((i <= length(toParse)) && (sessionApiCalls > 0)) {
   tmpXML <- NA
   tmpXML <- try(xmlParse(actURL))
   
-  #whenever the URL could not be parsed because the project Id was not available that does not count as an API-access
+  #whenever the URL could not be parsed because the project Id was not available that does still count as an API-access
   if(class(tmpXML)[1] == "try-error") {
     i <- i+1
-    #sessionApiCalls <- sessionApiCalls + 1
+    sessionApiCalls <- sessionApiCalls + 1
     next
   } else {
     if(storeXML == TRUE){

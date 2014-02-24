@@ -60,11 +60,10 @@ while ((j <= length(toParse))&& (sessionApiCalls > 0)) {
   tmpEnlXML <- try(xmlParse(enlistmentsURL))
   
   #whenever the URL could not be parsed because either the project_id or analysis_id
-  #was not available ohloh does not count that as an API-access
-  #so let's increase the number of calls we will be making by 1
+  #was not available ohloh does still count that as an API-access
   if(class(tmpEnlXML)[1] == "try-error") {
     j <- j+1
-    #sessionApiCalls <- sessionApiCalls + 1
+    sessionApiCalls <- sessionApiCalls + 1
     next
   } else {
     if(storeXML == TRUE){
