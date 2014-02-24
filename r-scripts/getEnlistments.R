@@ -68,7 +68,7 @@ while ((j <= length(toParse))&& (sessionApiCalls > 0)) {
     next
   } else {
     if(storeXML == TRUE){
-      enlistmentsFileName <- paste(enlistmentsDir, "/enlistments.",projectIds[j],".xml", sep="")
+      enlistmentsFileName <- paste(enlistmentsDir, "/enlistments.",toParse[j],".xml", sep="")
       #saves the retrieved and parsed XML-file in the local directory specified above.
       #This will overwrite(!) existing files
       try(saveXML(tmpEnlXML, file=wd(enlistmentsFileName), compression = 0, ident=TRUE))

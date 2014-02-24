@@ -32,6 +32,7 @@
 getProjectData <- function(parseRange, sessionApiCalls) {
 
 #if the data has been partially parsed, get the current state
+source(wd("./r-scripts/getIds.R"))
 source(wd("./r-scripts/getCurrentParseLevel.R"))
 
 #if the XML files retrieved from ohloh should be stored on disk for later use
@@ -43,17 +44,27 @@ if(storeXML == TRUE) {
   }
 }
 
-currentMaxId <- NA
-currentMaxId <- getCurrentParseLevel("project_id")
-#parsing projects will start at one step above the last parsed one.
-currentMaxId <- currentMaxId +1
+projectIds <- NA
+projectIds <- getIds("project_id")
 
-i <- max(currentMaxId, min(parseRange))
+toParse <- parseRange
+try(toParse <- setdiff(toParse, projectIds[[1]]))
+toParse <- sort(toParse)
+
+# currentMaxId <- NA
+# currentMaxId <- getCurrentParseLevel("project_id")
+# #parsing projects will start at one step above the last parsed one.
+# currentMaxId <- currentMaxId +1
+
+#i <- max(currentMaxId, min(parseRange))
+i <- 1
 
 #stores project information in the database and locally on disk (optional)
 #loop runs in steps of 'sessionApiCalls' due to API key restrictions
-while ((i <= max(parseRange)) && (sessionApiCalls > 0)) {
-  actURL <- paste("http://www.ohloh.net/projects/",i,".xml?api_key=",apiKey, sep="")
+while ((i <= length(toParse)) && (sessionApiCalls > 0)) {
+  projectId <- NA
+  projectId <- toParse[[i]]
+  actURL <- paste("http://www.ohloh.net/projects/",projectId,".xml?api_key=",apiKey, sep="")
   print(actURL)
   
   tmpXML <- NA
@@ -66,7 +77,7 @@ while ((i <= max(parseRange)) && (sessionApiCalls > 0)) {
     next
   } else {
     if(storeXML == TRUE){
-      projectDataFileName <- paste(projectsDir, "/p.",i,".xml", sep="")
+      projectDataFileName <- paste(projectsDir, "/p.",projectId,".xml", sep="")
       #saves the retrieved and parsed XML-file in the local directory specified above.
       #This will overwrite(!) existing files
       try(saveXML(tmpXML, file=wd(projectDataFileName), compression = 0, ident=TRUE))

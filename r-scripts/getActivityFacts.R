@@ -78,7 +78,7 @@ while ((j <= length(toParse)) && (sessionApiCalls > 0)) {
     next
   } else {
     if(storeXML == TRUE){
-      activity_factsFileName <- paste(activity_factsDir, "/activity_fact.",analysisIds[[2]][j],".xml", sep="")
+      activity_factsFileName <- paste(activity_factsDir, "/activity_fact.",analysisId,".xml", sep="")
       #saves the retrieved and parsed XML-file in the local directory specified above.
       #This will overwrite(!) existing files
       try(saveXML(tmpActXML, file=wd(activity_factsFileName), compression = 0, ident=TRUE))
