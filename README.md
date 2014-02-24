@@ -1,6 +1,6 @@
 ## Coche - The Offline Cache for Ohloh.net data
 
-Coche is a set of scripts written in R to access project data from [ohloh.net](http://www.ohloh.net) through ohloh's [public REST API](https://github.com/blackducksw/ohloh_api) and store it in a PostgreSQL database. The output XML files can optionally be stored locally as well. Currently it is designed to parse ranges of data (for example projects with id 1 to 100). Selecting individual projects is possible by setting the range to just the project of interest.
+Coche is a set of scripts written in R to access project data from [ohloh.net](http://www.ohloh.net) through ohloh's [public REST API](https://github.com/blackducksw/ohloh_api) and store it in a PostgreSQL database. The output XML files can optionally be stored locally as well. Currently it is designed to parse ranges of data (for example projects with id 1 to 100). Selecting individual projects is possible by setting the range to just the projects of interest.
 ### Requirements
 
 Coche has been tested with R version 3.0.x.
@@ -15,7 +15,7 @@ To run coche, an [API key from ohloh](http://www.ohloh.com/accounts/me/api_keys/
 
 ### Configuration
 
-Configuration is stored in [config.R](r-scripts/config.R). Insert your API key and database credentials there.
+Configuration is stored in [config.R](r-scripts/config.R). Set your API key, database credentials and global options there.
 
 Coche uses it's own concept of working directories that is independent from where the script is executed. Before you can use any of the parsing functions set up the *wd()* function you can find at the top of the script [parseOhlohData.R](r-scripts/parseOhlohData.R).
 
