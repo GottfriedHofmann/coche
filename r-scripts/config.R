@@ -1,4 +1,4 @@
-#this script file stores login credentials and other info is is user-dependent
+#this script file stores login credentials and other info that is user-dependent
 
 #ohloh API-Key
 apiKey <- ""
@@ -19,14 +19,18 @@ dbPass <- ""
 #for example if you can make 1000 calls per day, set it to 990 
 apiCalls <- 990
 
-#in case of a testrun, existing tables are dropped and new ones created
-reBuild <- FALSE
+#The range of projects you want to get information for in project_id format
+#If you want to parse info on just a specific project, set it for example to c(123)
+parseRange <- c(1:10)
 
-#should the script store each XML-file retrieved locally on disk?
-storeXML <- TRUE
+#drops tables and creates new ones
+reBuild <- FALSE
 
 #parse info on programming languages?
 parseLang <- FALSE
+
+#should the script store each XML-file retrieved locally on disk?
+storeXML <- TRUE
 
 #where to store xml-files?
 projectsDir <- "data/xml/projects"
