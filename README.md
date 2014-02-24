@@ -5,7 +5,7 @@ Coche is a set of scripts written in R to access project data from [ohloh.net](h
 
 Coche has been tested with R version 3.0.x.
 
-The R-scripts can be run seperately and only require the packages [XML](http://cran.r-project.org/web/packages/XML/index.html) and [RPostgreSQL](http://cran.r-project.org/web/packages/RPostgreSQL/index.html). 
+The provided R-functions require the packages [XML](http://cran.r-project.org/web/packages/XML/index.html) and [RPostgreSQL](http://cran.r-project.org/web/packages/RPostgreSQL/index.html). 
 
 You can install the required packages in an R-shell with 
 
